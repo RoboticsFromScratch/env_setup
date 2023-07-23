@@ -4,6 +4,7 @@ WORKSPACE_DIR=~/rfs_ws
 IMAGE_NAME=osrf/ros:humble-desktop
 USER_NAME=root
 
+echo $USER
 echo "Welcome to the Robotics From Scratch!"
 if [ ! -f $XAUTH ]; then
     if [ ! -z "$xauth_list" ]; then
@@ -26,25 +27,16 @@ if [ "$(docker ps -aq -f name=${CONTAINER_NAME})" ]; then
     fi
 else
 
-if [ -n "$DISPLAY" ]; then
-	# give docker root user X11 permissions
-	sudo xhost +si:localuser:root
-	
-	# enable SSH X11 forwarding inside container (https://stackoverflow.com/q/48235040)
-	XAUTH=/tmp/.docker.xauth
-	xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
-	chmod 777 $XAUTH
 
-	DISPLAY_DEVICE="-e DISPLAY=$DISPLAY -v /tmp/.X11-unix/:/tmp/.X11-unix -v $XAUTH:$XAUTH -e XAUTHORITY=$XAUTH"
-fi
 
 docker run -it \
+        --net=host \
         --volume=${WORKSPACE_DIR}:${WORKSPACE_DIR}:rw \
         --env="DISPLAY=$DISPLAY" \
         --env="QT_X11_NO_MITSHM=1" \
         --env="XAUTHORITY=$XAUTH" \
         --ipc="host" \
-        --volume="$XAUTH:$XAUTH" \
+        --volume=$HOME/.Xauthority:/root/.Xauthority:ro \
         --volume="/etc/localtime:/etc/localtime:ro" \
         --volume="/dev/input:/dev/input" \
         --privileged \
